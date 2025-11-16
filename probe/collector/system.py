@@ -42,10 +42,13 @@ def collect_metrics() -> Dict:
 
     iface = _default_gateway_interface()
     ip_addr = None
-    if iface and iface in netifaces.ifaddresses():
-        addr_info = netifaces.ifaddresses(iface).get(netifaces.AF_INET)
-        if addr_info:
-            ip_addr = addr_info[0].get("addr")
+    if iface:
+        try:
+            addr_info = netifaces.ifaddresses(iface).get(netifaces.AF_INET)
+            if addr_info:
+                ip_addr = addr_info[0].get("addr")
+        except Exception:
+            ip_addr = None
 
     vpn_state = _vpn_process_running()
 
