@@ -11,7 +11,9 @@ const useWssInput = document.getElementById("use-wss");
 const useDockerInput = document.getElementById("use-docker");
 const genBtn = document.getElementById("gen-script");
 const copyBtn = document.getElementById("copy-script");
+const copyCurlBtn = document.getElementById("copy-curl");
 const scriptOutput = document.getElementById("script-output");
+const curlOutput = document.getElementById("curl-output");
 const scriptStatus = document.getElementById("script-status");
 
 controlHostInput.value = location.hostname || "127.0.0.1";
@@ -146,6 +148,14 @@ async function generateScript() {
     const data = await resp.json();
     scriptOutput.value = data.script;
     scriptStatus.textContent = `已生成，server_id=${data.server_id}`;
+    const curlUrl = new URL(`${scheme}://${host}:${port}/api/probes/deploy.sh`);
+    curlUrl.searchParams.set("control_host", host);
+    curlUrl.searchParams.set("control_port", String(port));
+    curlUrl.searchParams.set("server_name", serverName);
+    curlUrl.searchParams.set("interval", String(interval));
+    curlUrl.searchParams.set("use_wss", useWss ? "true" : "false");
+    curlUrl.searchParams.set("use_docker", useDocker ? "true" : "false");
+    curlOutput.value = `curl "${curlUrl.toString()}" -o deploy.sh && bash deploy.sh`;
   } catch (err) {
     scriptStatus.textContent = `失败: ${err.message}`;
   }
@@ -159,6 +169,19 @@ async function copyScript() {
   try {
     await navigator.clipboard.writeText(scriptOutput.value);
     scriptStatus.textContent = "已复制";
+  } catch (_e) {
+    scriptStatus.textContent = "复制失败";
+  }
+}
+
+async function copyCurl() {
+  if (!curlOutput.value) {
+    scriptStatus.textContent = "没有可复制的 curl";
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(curlOutput.value);
+    scriptStatus.textContent = "已复制 curl 命令";
   } catch (_e) {
     scriptStatus.textContent = "复制失败";
   }
@@ -195,3 +218,4 @@ function connectWs() {
 connectWs();
 genBtn?.addEventListener("click", generateScript);
 copyBtn?.addEventListener("click", copyScript);
+copyCurlBtn?.addEventListener("click", copyCurl);
