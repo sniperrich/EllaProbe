@@ -1,3 +1,4 @@
+window.BACKEND_WS = "ws://127.0.0.1:9000/ws/dashboard";
 const wsStatusEl = document.getElementById("ws-status");
 const gridEl = document.getElementById("server-grid");
 const selectEl = document.getElementById("server-select");

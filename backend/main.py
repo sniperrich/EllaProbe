@@ -1,5 +1,5 @@
 import uvicorn
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
@@ -23,12 +23,12 @@ app.add_middleware(
 
 
 @app.websocket("/ws/probe")
-async def probe_ws(websocket, db: Session = Depends(get_db)):
+async def probe_ws(websocket: WebSocket, db: Session = Depends(get_db)):
     await ws_server.probe_socket(websocket, db)
 
 
 @app.websocket("/ws/dashboard")
-async def dashboard_ws(websocket):
+async def dashboard_ws(websocket: WebSocket):
     await ws_server.dashboard_socket(websocket)
 
 
