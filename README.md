@@ -40,6 +40,16 @@
    - 启动后端后，直接打开 `frontend/index.html`（或用 Nginx/静态服务器托管）。
    - WebSocket 地址默认指向同一主机的 `/ws/dashboard`。
 
+### 一键生成探针脚本（新）
+- 打开前端页面顶部的“一键生成探针安装命令”，填入控制面地址/端口并点击生成，复制输出脚本到节点执行即可。
+- 也可直接调用 API：
+  ```bash
+  curl -X POST http://<控制面>:9000/api/probes/bootstrap \
+    -H "Content-Type: application/json" \
+    -d '{"server_name":"vpn-node-1","control_host":"<控制面IP>","control_port":9000,"interval":5}'
+  ```
+  返回包含 `server_id`/`probe_id`/`api_key` 和可复制脚本。
+
 ## 通信协议
 - 探针连接：
   ```json

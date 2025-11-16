@@ -20,6 +20,48 @@
     </header>
 
     <main class="max-w-5xl mx-auto px-6 py-8 space-y-8">
+      <section class="bg-slate-950/60 border border-slate-800 rounded-xl p-4 shadow-lg space-y-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-xs uppercase text-slate-500">快速部署</p>
+            <h2 class="text-lg font-semibold">一键生成探针安装命令</h2>
+          </div>
+          <span class="text-xs text-slate-500">用于新节点复制粘贴</span>
+        </div>
+        <div class="grid gap-3 md:grid-cols-2">
+          <label class="text-sm space-y-1">
+            <span class="text-slate-400">控制面地址</span>
+            <input id="control-host" type="text" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2" />
+          </label>
+          <label class="text-sm space-y-1">
+            <span class="text-slate-400">控制面端口</span>
+            <input id="control-port" type="number" value="9000" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2" />
+          </label>
+          <label class="text-sm space-y-1">
+            <span class="text-slate-400">服务器名称（自动创建）</span>
+            <input id="server-name" type="text" placeholder="vpn-node-1" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2" />
+          </label>
+          <label class="text-sm space-y-1">
+            <span class="text-slate-400">采集间隔（秒）</span>
+            <input id="probe-interval" type="number" value="5" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2" />
+          </label>
+          <label class="flex items-center gap-2 text-sm">
+            <input id="use-wss" type="checkbox" class="h-4 w-4" />
+            <span class="text-slate-400">使用 wss（HTTPS 部署时勾选）</span>
+          </label>
+        </div>
+        <div class="flex gap-3">
+          <button id="gen-script" class="bg-emerald-500 hover:bg-emerald-600 text-slate-900 font-semibold px-4 py-2 rounded">
+            生成命令
+          </button>
+          <button id="copy-script" class="bg-slate-800 hover:bg-slate-700 text-slate-100 px-4 py-2 rounded">
+            复制命令
+          </button>
+          <span id="script-status" class="text-sm text-slate-400"></span>
+        </div>
+        <textarea id="script-output" rows="8" class="w-full bg-slate-900 border border-slate-800 rounded px-3 py-2 text-sm font-mono" placeholder="点击生成后显示脚本" readonly></textarea>
+      </section>
+
       <section>
         <div class="flex items-center justify-between mb-3">
           <h2 class="text-lg font-medium">服务器列表</h2>

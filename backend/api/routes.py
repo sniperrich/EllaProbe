@@ -1,3 +1,5 @@
+import secrets
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from starlette.status import HTTP_201_CREATED
@@ -6,6 +8,8 @@ from backend.api.schemas import (
     MetricIn,
     MetricsList,
     MetricOut,
+    ProbeBootstrapRequest,
+    ProbeBootstrapResponse,
     ProbeCreate,
     ProbeOut,
     ServerCreate,
@@ -71,3 +75,68 @@ def add_metric(metric: MetricIn, db: Session = Depends(get_db)):
     db.refresh(item)
     return item
 
+
+def _ensure_server(payload: ProbeBootstrapRequest, db: Session) -> Server:
+    if payload.server_id:
+        server = db.query(Server).filter(Server.id == payload.server_id).first()
+        if not server:
+            raise HTTPException(status_code=404, detail="server not found")
+        return server
+    if not payload.server_name:
+        raise HTTPException(status_code=400, detail="server_name or server_id required")
+    server = Server(name=payload.server_name)
+    db.add(server)
+    db.commit()
+    db.refresh(server)
+    return server
+
+
+@router.post("/probes/bootstrap", response_model=ProbeBootstrapResponse)
+def bootstrap_probe(payload: ProbeBootstrapRequest, db: Session = Depends(get_db)):
+    server = _ensure_server(payload, db)
+    api_key = payload.api_key or secrets.token_hex(16)
+    probe = Probe(server_id=server.id, api_key=api_key)
+    db.add(probe)
+    db.commit()
+    db.refresh(probe)
+
+    scheme = "wss" if payload.use_wss else "ws"
+    control_ws = f"{scheme}://{payload.control_host}:{payload.control_port}/ws/probe"
+
+    script = f"""#!/usr/bin/env bash
+set -e
+CONTROL_HOST="{payload.control_host}"
+CONTROL_PORT="{payload.control_port}"
+SERVER_ID="{server.id}"
+PROBE_API_KEY="{api_key}"
+PROBE_INTERVAL="{payload.interval}"
+CONTROL_WS="{control_ws}"
+
+command -v python3.11 >/dev/null 2>&1 || (apt-get update && apt-get install -y python3.11 python3.11-venv)
+mkdir -p /opt
+cd /opt
+if [ ! -d "EllaProbe" ]; then
+  git clone https://github.com/sniperrich/EllaProbe.git
+fi
+cd EllaProbe/probe
+python3.11 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+cat > .env <<EOF
+PROBE_API_KEY=$PROBE_API_KEY
+SERVER_ID=$SERVER_ID
+CONTROL_WS=$CONTROL_WS
+PROBE_INTERVAL=$PROBE_INTERVAL
+EOF
+nohup bash -c 'set -a; source .env; set +a; source .venv/bin/activate; python main.py' > /var/log/ellaprobe-probe.log 2>&1 &
+echo $! > /var/run/ellaprobe-probe.pid
+echo "probe started. logs: /var/log/ellaprobe-probe.log"
+"""
+
+    return ProbeBootstrapResponse(
+        server_id=server.id,
+        probe_id=probe.id,
+        api_key=api_key,
+        control_ws=control_ws,
+        script=script,
+    )

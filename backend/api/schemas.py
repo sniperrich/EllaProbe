@@ -53,3 +53,21 @@ class MetricOut(BaseModel):
 
 class MetricsList(BaseModel):
     items: List[MetricOut]
+
+
+class ProbeBootstrapRequest(BaseModel):
+    server_id: Optional[str] = None
+    server_name: Optional[str] = None
+    control_host: str
+    control_port: int = 9000
+    use_wss: bool = False
+    interval: int = 5
+    api_key: Optional[str] = None
+
+
+class ProbeBootstrapResponse(BaseModel):
+    server_id: str
+    probe_id: str
+    api_key: str
+    control_ws: str
+    script: str

@@ -1,9 +1,19 @@
-window.BACKEND_WS = "ws://127.0.0.1:9000/ws/dashboard";
+window.BACKEND_WS = "ws://96.126.191.17:9000/ws/dashboard";
 const wsStatusEl = document.getElementById("ws-status");
 const gridEl = document.getElementById("server-grid");
 const selectEl = document.getElementById("server-select");
 const chartCtx = document.getElementById("metrics-chart").getContext("2d");
+const controlHostInput = document.getElementById("control-host");
+const controlPortInput = document.getElementById("control-port");
+const serverNameInput = document.getElementById("server-name");
+const intervalInput = document.getElementById("probe-interval");
+const useWssInput = document.getElementById("use-wss");
+const genBtn = document.getElementById("gen-script");
+const copyBtn = document.getElementById("copy-script");
+const scriptOutput = document.getElementById("script-output");
+const scriptStatus = document.getElementById("script-status");
 
+controlHostInput.value = location.hostname || "127.0.0.1";
 
 const state = {
   servers: {},
@@ -106,6 +116,51 @@ function updateChart(serverId, cpu, timestamp) {
   chart.update();
 }
 
+async function generateScript() {
+  const host = controlHostInput.value.trim() || location.hostname;
+  const port = Number(controlPortInput.value || 9000);
+  const serverName = serverNameInput.value.trim() || "vpn-node";
+  const interval = Number(intervalInput.value || 5);
+  const useWss = useWssInput.checked;
+  const scheme = useWss ? "https" : "http";
+  scriptStatus.textContent = "生成中...";
+  try {
+    const resp = await fetch(`${scheme}://${host}:${port}/api/probes/bootstrap`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        server_name: serverName,
+        control_host: host,
+        control_port: port,
+        use_wss: useWss,
+        interval,
+      }),
+    });
+    if (!resp.ok) {
+      const text = await resp.text();
+      throw new Error(text || resp.statusText);
+    }
+    const data = await resp.json();
+    scriptOutput.value = data.script;
+    scriptStatus.textContent = `已生成，server_id=${data.server_id}`;
+  } catch (err) {
+    scriptStatus.textContent = `失败: ${err.message}`;
+  }
+}
+
+async function copyScript() {
+  if (!scriptOutput.value) {
+    scriptStatus.textContent = "没有可复制的脚本";
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(scriptOutput.value);
+    scriptStatus.textContent = "已复制";
+  } catch (_e) {
+    scriptStatus.textContent = "复制失败";
+  }
+}
+
 function connectWs() {
   const proto = location.protocol === "https:" ? "wss" : "ws";
   // 若前端与后端不同端口，通过 BACKEND_WS 覆盖；默认使用当前主机的 9000 端口
@@ -135,3 +190,5 @@ function connectWs() {
 }
 
 connectWs();
+genBtn?.addEventListener("click", generateScript);
+copyBtn?.addEventListener("click", copyScript);
