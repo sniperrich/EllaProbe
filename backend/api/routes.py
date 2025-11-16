@@ -111,8 +111,13 @@ docker run -d --name ellaprobe-probe --restart=always \\
     set -e
     apt-get update && apt-get install -y git build-essential python3-dev
     mkdir -p /opt && cd /opt
-    git clone https://github.com/sniperrich/EllaProbe.git
-    cd EllaProbe/probe
+    if [ -d EllaProbe ]; then
+      cd EllaProbe && git pull
+    else
+      git clone https://github.com/sniperrich/EllaProbe.git
+      cd EllaProbe
+    fi
+    cd probe
     pip install -r requirements.txt
     python main.py
   '
