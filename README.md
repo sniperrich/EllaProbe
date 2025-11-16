@@ -42,11 +42,12 @@
 
 ### 一键生成探针脚本（新）
 - 打开前端页面顶部的“一键生成探针安装命令”，填入控制面地址/端口并点击生成，复制输出脚本到节点执行即可。
+  - 勾选“生成 Docker 版脚本”可输出基于 python:3.11-slim 的容器运行命令（节点需已安装 Docker 或允许脚本安装 docker.io）。
 - 也可直接调用 API：
   ```bash
   curl -X POST http://<控制面>:9000/api/probes/bootstrap \
     -H "Content-Type: application/json" \
-    -d '{"server_name":"vpn-node-1","control_host":"<控制面IP>","control_port":9000,"interval":5}'
+    -d '{"server_name":"vpn-node-1","control_host":"<控制面IP>","control_port":9000,"interval":5,"use_docker":false}'
   ```
   返回包含 `server_id`/`probe_id`/`api_key` 和可复制脚本。
 

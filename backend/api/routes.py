@@ -91,19 +91,35 @@ def _ensure_server(payload: ProbeBootstrapRequest, db: Session) -> Server:
     return server
 
 
-@router.post("/probes/bootstrap", response_model=ProbeBootstrapResponse)
-def bootstrap_probe(payload: ProbeBootstrapRequest, db: Session = Depends(get_db)):
-    server = _ensure_server(payload, db)
-    api_key = payload.api_key or secrets.token_hex(16)
-    probe = Probe(server_id=server.id, api_key=api_key)
-    db.add(probe)
-    db.commit()
-    db.refresh(probe)
+def _build_script(payload: ProbeBootstrapRequest, server: Server, api_key: str, control_ws: str) -> str:
+    if payload.use_docker:
+        return f"""#!/usr/bin/env bash
+set -e
+CONTROL_WS="{control_ws}"
+SERVER_ID="{server.id}"
+PROBE_API_KEY="{api_key}"
+PROBE_INTERVAL="{payload.interval}"
 
-    scheme = "wss" if payload.use_wss else "ws"
-    control_ws = f"{scheme}://{payload.control_host}:{payload.control_port}/ws/probe"
+command -v docker >/dev/null 2>&1 || (apt-get update && apt-get install -y docker.io)
+docker rm -f ellaprobe-probe || true
+docker run -d --name ellaprobe-probe --restart=always \\
+  -e PROBE_API_KEY="$PROBE_API_KEY" \\
+  -e SERVER_ID="$SERVER_ID" \\
+  -e CONTROL_WS="$CONTROL_WS" \\
+  -e PROBE_INTERVAL="$PROBE_INTERVAL" \\
+  python:3.11-slim bash -c '
+    set -e
+    apt-get update && apt-get install -y git build-essential python3-dev
+    mkdir -p /opt && cd /opt
+    git clone https://github.com/sniperrich/EllaProbe.git
+    cd EllaProbe/probe
+    pip install -r requirements.txt
+    python main.py
+  '
+echo "probe container started. name=ellaprobe-probe"
+"""
 
-    script = f"""#!/usr/bin/env bash
+    return f"""#!/usr/bin/env bash
 set -e
 CONTROL_HOST="{payload.control_host}"
 CONTROL_PORT="{payload.control_port}"
@@ -113,6 +129,7 @@ PROBE_INTERVAL="{payload.interval}"
 CONTROL_WS="{control_ws}"
 
 command -v python3.11 >/dev/null 2>&1 || (apt-get update && apt-get install -y python3.11 python3.11-venv)
+command -v git >/dev/null 2>&1 || (apt-get update && apt-get install -y git)
 mkdir -p /opt
 cd /opt
 if [ ! -d "EllaProbe" ]; then
@@ -132,6 +149,20 @@ nohup bash -c 'set -a; source .env; set +a; source .venv/bin/activate; python ma
 echo $! > /var/run/ellaprobe-probe.pid
 echo "probe started. logs: /var/log/ellaprobe-probe.log"
 """
+
+
+@router.post("/probes/bootstrap", response_model=ProbeBootstrapResponse)
+def bootstrap_probe(payload: ProbeBootstrapRequest, db: Session = Depends(get_db)):
+    server = _ensure_server(payload, db)
+    api_key = payload.api_key or secrets.token_hex(16)
+    probe = Probe(server_id=server.id, api_key=api_key)
+    db.add(probe)
+    db.commit()
+    db.refresh(probe)
+
+    scheme = "wss" if payload.use_wss else "ws"
+    control_ws = f"{scheme}://{payload.control_host}:{payload.control_port}/ws/probe"
+    script = _build_script(payload, server, api_key, control_ws)
 
     return ProbeBootstrapResponse(
         server_id=server.id,

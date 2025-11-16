@@ -63,6 +63,7 @@ class ProbeBootstrapRequest(BaseModel):
     use_wss: bool = False
     interval: int = 5
     api_key: Optional[str] = None
+    use_docker: bool = False
 
 
 class ProbeBootstrapResponse(BaseModel):

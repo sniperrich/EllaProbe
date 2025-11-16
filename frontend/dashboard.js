@@ -8,6 +8,7 @@ const controlPortInput = document.getElementById("control-port");
 const serverNameInput = document.getElementById("server-name");
 const intervalInput = document.getElementById("probe-interval");
 const useWssInput = document.getElementById("use-wss");
+const useDockerInput = document.getElementById("use-docker");
 const genBtn = document.getElementById("gen-script");
 const copyBtn = document.getElementById("copy-script");
 const scriptOutput = document.getElementById("script-output");
@@ -122,6 +123,7 @@ async function generateScript() {
   const serverName = serverNameInput.value.trim() || "vpn-node";
   const interval = Number(intervalInput.value || 5);
   const useWss = useWssInput.checked;
+  const useDocker = useDockerInput.checked;
   const scheme = useWss ? "https" : "http";
   scriptStatus.textContent = "生成中...";
   try {
@@ -134,6 +136,7 @@ async function generateScript() {
         control_port: port,
         use_wss: useWss,
         interval,
+        use_docker: useDocker,
       }),
     });
     if (!resp.ok) {
