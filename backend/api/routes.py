@@ -119,7 +119,7 @@ docker run -d --name ellaprobe-probe --restart=always \\
     fi
     cd probe
     pip install -r requirements.txt
-    python main.py
+    PYTHONPATH=/opt/EllaProbe python main.py
   '
 echo "probe container started. name=ellaprobe-probe"
 """
