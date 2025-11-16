@@ -1,5 +1,6 @@
 import asyncio
 import json
+import traceback
 from typing import AsyncGenerator, Callable, Dict
 
 import websockets
@@ -63,4 +64,6 @@ async def run_probe(
                     await asyncio.sleep(interval)
         except Exception as exc:  # backoff before reconnect
             print(f"[probe] connection error: {exc}")
+            tb = traceback.format_exc()
+            print(tb)
             await asyncio.sleep(5)

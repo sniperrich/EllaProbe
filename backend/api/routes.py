@@ -140,15 +140,15 @@ PROBE_API_KEY="{api_key}"
 PROBE_INTERVAL="{payload.interval}"
 CONTROL_WS="{control_ws}"
 
-command -v python3.11 >/dev/null 2>&1 || (apt-get update && apt-get install -y python3.11 python3.11-venv)
-command -v git >/dev/null 2>&1 || (apt-get update && apt-get install -y git)
-mkdir -p /opt
-cd /opt
-if [ ! -d "EllaProbe" ]; then
-  git clone https://github.com/sniperrich/EllaProbe.git
-fi
+command -v python3 >/dev/null 2>&1 || (apt-get update && apt-get install -y python3 python3-venv python3-pip)
+    apt-get update && apt-get install -y python3-venv python3-pip git
+    mkdir -p /opt
+    cd /opt
+    if [ ! -d "EllaProbe" ]; then
+      git clone https://github.com/sniperrich/EllaProbe.git
+    fi
 cd EllaProbe/probe
-python3.11 -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 cat > .env <<EOF
