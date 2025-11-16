@@ -70,3 +70,4 @@ def add_metric(metric: MetricIn, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(item)
     return item
+

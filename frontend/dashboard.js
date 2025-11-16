@@ -4,6 +4,7 @@ const gridEl = document.getElementById("server-grid");
 const selectEl = document.getElementById("server-select");
 const chartCtx = document.getElementById("metrics-chart").getContext("2d");
 
+
 const state = {
   servers: {},
   datasets: {},

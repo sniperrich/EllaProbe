@@ -13,6 +13,7 @@ app = FastAPI(title="VPN Probe Control Plane")
 
 app.include_router(routes.router)
 
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
