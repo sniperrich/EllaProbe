@@ -5,6 +5,7 @@ from starlette.status import HTTP_201_CREATED
 from backend.api.schemas import (
     MetricIn,
     MetricsList,
+    MetricOut,
     ProbeCreate,
     ProbeOut,
     ServerCreate,

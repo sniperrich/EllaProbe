@@ -106,7 +106,11 @@ function updateChart(serverId, cpu, timestamp) {
 
 function connectWs() {
   const proto = location.protocol === "https:" ? "wss" : "ws";
-  const ws = new WebSocket(`${proto}://${location.host}/ws/dashboard`);
+  // 若前端与后端不同端口，通过 BACKEND_WS 覆盖；默认使用当前主机的 9000 端口
+  const wsUrl =
+    window.BACKEND_WS ||
+    `${proto}://${location.hostname}:9000/ws/dashboard`;
+  const ws = new WebSocket(wsUrl);
   wsStatusEl.textContent = "连接中...";
 
   ws.onopen = () => {
