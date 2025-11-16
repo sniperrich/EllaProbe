@@ -1,0 +1,14 @@
+/* 本地轻量覆盖。生产环境可用 Tailwind CLI 生成正式样式。 */
+
+body {
+  font-family: "Inter", "SF Pro Display", system-ui, -apple-system, sans-serif;
+}
+
+.card {
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}

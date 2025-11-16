@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VPN 服务器探针监控</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="tailwind.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body class="bg-slate-900 text-slate-100 min-h-screen">
+    <header class="border-b border-slate-800 bg-slate-950/80 backdrop-blur-md">
+      <div class="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div>
+          <p class="text-xs uppercase tracking-wide text-slate-500">控制面</p>
+          <h1 class="text-2xl font-semibold">VPN 服务器探针监控</h1>
+        </div>
+        <span class="text-sm text-emerald-400" id="ws-status">连接中...</span>
+      </div>
+    </header>
+
+    <main class="max-w-5xl mx-auto px-6 py-8 space-y-8">
+      <section>
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-lg font-medium">服务器列表</h2>
+          <p class="text-sm text-slate-400">实时状态来自 WebSocket 推送</p>
+        </div>
+        <div id="server-grid" class="grid gap-4 md:grid-cols-2"></div>
+      </section>
+
+      <section class="bg-slate-950/60 border border-slate-800 rounded-xl p-4 shadow-lg">
+        <div class="flex items-center justify-between mb-3">
+          <div>
+            <p class="text-xs text-slate-500 uppercase tracking-wide">
+              历史趋势（CPU）
+            </p>
+            <h3 class="text-xl font-semibold">实时指标图表</h3>
+          </div>
+          <select id="server-select" class="bg-slate-900 text-slate-100 border border-slate-700 rounded px-3 py-1 text-sm">
+            <option value="">自动</option>
+          </select>
+        </div>
+        <canvas id="metrics-chart" height="120"></canvas>
+      </section>
+    </main>
+
+    <script src="dashboard.js"></script>
+  </body>
+</html>
