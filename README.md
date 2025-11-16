@@ -50,6 +50,11 @@
     -d '{"server_name":"vpn-node-1","control_host":"<控制面IP>","control_port":9000,"interval":5,"use_docker":false}'
   ```
   返回包含 `server_id`/`probe_id`/`api_key` 和可复制脚本。
+- 也可以直接一键拉取脚本（示例）：
+  ```bash
+  curl "http://<控制面IP>:9000/api/probes/deploy.sh?control_host=<控制面IP>&server_name=vpn-node-1&control_port=9000&interval=5&use_docker=false" -o deploy.sh
+  bash deploy.sh
+  ```
 
 ## 通信协议
 - 探针连接：

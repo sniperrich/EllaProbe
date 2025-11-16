@@ -1,6 +1,6 @@
 import secrets
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
 from starlette.status import HTTP_201_CREATED
 
@@ -171,3 +171,39 @@ def bootstrap_probe(payload: ProbeBootstrapRequest, db: Session = Depends(get_db
         control_ws=control_ws,
         script=script,
     )
+
+
+@router.get("/probes/deploy.sh")
+def bootstrap_script(
+    control_host: str,
+    server_name: str = "vpn-node",
+    control_port: int = 9000,
+    use_wss: bool = False,
+    interval: int = 5,
+    use_docker: bool = False,
+    server_id: str | None = None,
+    api_key: str | None = None,
+    db: Session = Depends(get_db),
+):
+    payload = ProbeBootstrapRequest(
+        server_id=server_id,
+        server_name=server_name,
+        control_host=control_host,
+        control_port=control_port,
+        use_wss=use_wss,
+        interval=interval,
+        api_key=api_key,
+        use_docker=use_docker,
+    )
+    server = _ensure_server(payload, db)
+    api_key_value = payload.api_key or secrets.token_hex(16)
+    probe = Probe(server_id=server.id, api_key=api_key_value)
+    db.add(probe)
+    db.commit()
+    db.refresh(probe)
+
+    scheme = "wss" if payload.use_wss else "ws"
+    control_ws = f"{scheme}://{payload.control_host}:{payload.control_port}/ws/probe"
+    script = _build_script(payload, server, api_key_value, control_ws)
+
+    return Response(content=script, media_type="text/plain")
