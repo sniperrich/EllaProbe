@@ -109,17 +109,24 @@ docker run -d --name ellaprobe-probe --restart=always \\
   -e PROBE_INTERVAL="$PROBE_INTERVAL" \\
   python:3.11-slim bash -c '
     set -e
-    apt-get update && apt-get install -y git build-essential python3-dev
-    mkdir -p /opt && cd /opt
-    if [ -d EllaProbe ]; then
-      cd EllaProbe && git pull
+    touch /opt/.ellaprobe_boot
+    if [ ! -f /opt/.ellaprobe_ready ]; then
+      apt-get update && apt-get install -y git build-essential python3-dev python3-pip
+      mkdir -p /opt && cd /opt
+      if [ -d EllaProbe ]; then
+        cd EllaProbe && git pull
+      else
+        git clone https://github.com/sniperrich/EllaProbe.git
+        cd EllaProbe
+      fi
+      cd probe
+      pip install --no-cache-dir -r requirements.txt
+      touch /opt/.ellaprobe_ready
     else
-      git clone https://github.com/sniperrich/EllaProbe.git
-      cd EllaProbe
+      cd /opt/EllaProbe/probe
     fi
-    cd probe
-    pip install -r requirements.txt
-    PYTHONPATH=/opt/EllaProbe python main.py
+    export PYTHONPATH=/opt/EllaProbe
+    exec python main.py
   '
 echo "probe container started. name=ellaprobe-probe"
 """
