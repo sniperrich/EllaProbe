@@ -70,6 +70,7 @@ function renderServerCard(serverId, data) {
   let card = document.getElementById(`server-${serverId}`);
   const vpn = data.vpn || {};
   const network = data.network || {};
+  const disk = data.disk_io || {};
   if (!card) {
     card = document.createElement("div");
     card.id = `server-${serverId}`;
@@ -85,6 +86,7 @@ function renderServerCard(serverId, data) {
       </div>
       <span class="text-emerald-400 text-sm bg-emerald-400/10 px-2 py-1 rounded-full">在线</span>
     </div>
+    <a href="detail.html?server_id=${serverId}" class="text-xs text-emerald-400 hover:underline">查看详情</a>
     <div class="grid grid-cols-2 gap-2 text-sm text-slate-300">
       <div>CPU: <span class="text-white">${Number(data.cpu || 0).toFixed(
         1
@@ -96,8 +98,10 @@ function renderServerCard(serverId, data) {
         1
       )}%</span></div>
       <div>VPN 连接: <span class="text-white">${vpn.connections || 0}</span></div>
-      <div>网络出: ${network.bytes_sent || 0}</div>
-      <div>网络入: ${network.bytes_recv || 0}</div>
+      <div>网络速率: ${(network.tx_rate || 0 / 1024 / 1024).toFixed(1)} MB/s ↑</div>
+      <div>网络速率: ${(network.rx_rate || 0 / 1024 / 1024).toFixed(1)} MB/s ↓</div>
+      <div>磁盘速率: ${(disk.read_rate || 0 / 1024 / 1024).toFixed(1)} MB/s R</div>
+      <div>磁盘速率: ${(disk.write_rate || 0 / 1024 / 1024).toFixed(1)} MB/s W</div>
     </div>
     <p class="text-xs text-slate-500">接口: ${
       data.host?.iface || "-"

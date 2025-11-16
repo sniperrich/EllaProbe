@@ -148,10 +148,10 @@ command -v python3 >/dev/null 2>&1 || (apt-get update && apt-get install -y pyth
       git clone https://github.com/sniperrich/EllaProbe.git
     fi
 cd EllaProbe/probe
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-cat > .env <<EOF
+    python3 -m venv .venv
+    source .venv/bin/activate
+    pip install -r requirements.txt
+    cat > .env <<EOF
 PROBE_API_KEY=$PROBE_API_KEY
 SERVER_ID=$SERVER_ID
 CONTROL_WS=$CONTROL_WS

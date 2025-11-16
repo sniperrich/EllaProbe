@@ -1,5 +1,6 @@
 import socket
-from typing import Dict, Optional
+import time
+from typing import Dict, Optional, Tuple
 
 import netifaces
 import psutil
@@ -34,7 +35,7 @@ def _default_gateway_interface() -> Optional[str]:
 
 
 def collect_metrics() -> Dict:
-    cpu = psutil.cpu_percent(interval=0.3)
+    cpu = psutil.cpu_percent(interval=0.2)
     memory = psutil.virtual_memory().percent
     disk = psutil.disk_usage("/").percent
     net = psutil.net_io_counters()
@@ -52,11 +53,49 @@ def collect_metrics() -> Dict:
 
     vpn_state = _vpn_process_running()
 
+    # 速率计算：以进程内静态缓存保存上次计数与时间
+    now = time.time()
+    if not hasattr(collect_metrics, "_last"):
+        collect_metrics._last = {
+            "time": now,
+            "bytes_sent": net.bytes_sent,
+            "bytes_recv": net.bytes_recv,
+            "disk_read": psutil.disk_io_counters().read_bytes,
+            "disk_write": psutil.disk_io_counters().write_bytes,
+        }
+    last = collect_metrics._last
+    interval = max(now - last["time"], 1e-3)
+    net_sent_rate = max(net.bytes_sent - last["bytes_sent"], 0) / interval
+    net_recv_rate = max(net.bytes_recv - last["bytes_recv"], 0) / interval
+    disk_io = psutil.disk_io_counters()
+    disk_read_rate = max(disk_io.read_bytes - last["disk_read"], 0) / interval
+    disk_write_rate = max(disk_io.write_bytes - last["disk_write"], 0) / interval
+    collect_metrics._last = {
+        "time": now,
+        "bytes_sent": net.bytes_sent,
+        "bytes_recv": net.bytes_recv,
+        "disk_read": disk_io.read_bytes,
+        "disk_write": disk_io.write_bytes,
+    }
+
     return {
         "cpu": cpu,
         "memory": memory,
         "disk": disk,
-        "network": {"bytes_sent": net.bytes_sent, "bytes_recv": net.bytes_recv},
+        "network": {
+            "bytes_sent": net.bytes_sent,
+            "bytes_recv": net.bytes_recv,
+            "tx_rate": net_sent_rate,  # bytes/s
+            "rx_rate": net_recv_rate,
+            "iface": iface,
+            "ip": ip_addr,
+        },
+        "disk_io": {
+            "read_bytes": disk_io.read_bytes,
+            "write_bytes": disk_io.write_bytes,
+            "read_rate": disk_read_rate,  # bytes/s
+            "write_rate": disk_write_rate,
+        },
         "vpn": {
             "connections": _vpn_connections(),
             "openvpn_running": vpn_state["openvpn"],

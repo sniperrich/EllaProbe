@@ -9,6 +9,8 @@ from backend.models.models import Metric, Probe
 from backend.websocket.manager import ConnectionManager
 
 frontend_manager = ConnectionManager()
+# 简单缓存最近一次指标，前端新连接时可立即看到
+latest_state: Dict[str, Dict] = {}
 
 
 async def _handle_metrics(
@@ -27,6 +29,10 @@ async def _handle_metrics(
     probe.last_seen = dt.datetime.utcnow()
     db.commit()
     db.refresh(metric_row)
+    latest_state[probe.server_id] = {
+        "data": data,
+        "timestamp": ts.isoformat(),
+    }
     await frontend_manager.broadcast(
         {
             "type": "realtime_update",
@@ -69,6 +75,19 @@ async def probe_socket(websocket: WebSocket, db: Session = Depends(get_db)):
 
 async def dashboard_socket(websocket: WebSocket):
     await frontend_manager.connect(websocket)
+    # 新连接立即推送缓存的最新指标，减少首屏等待
+    for sid, payload in latest_state.items():
+        try:
+            await websocket.send_json(
+                {
+                    "type": "realtime_update",
+                    "server_id": sid,
+                    "data": payload.get("data", {}),
+                    "timestamp": payload.get("timestamp"),
+                }
+            )
+        except Exception:
+            pass
     try:
         while True:
             await websocket.receive_text()  # keepalive; data is push-only
